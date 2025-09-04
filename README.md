@@ -12,3 +12,27 @@ V   | Queued | [Bioconductor for Genomic Data Science](https://www.coursera.org/
 VI  | Queued | [Statistics for Genomic Data Science](https://www.coursera.org/learn/statistical-genomics?specialization=genomic-data-science) |
 
 ---
+
+## I. Introduction to Genomic Technologies
+
+ - Biology Overview
+ - Measurement Technology
+ - Computing Technology
+ - Data Science Technology
+
+ 
+## II. Python for Genomic Data Science
+
+- Strings and Numbers
+- Data Structures, Ifs, and Loops
+- Functions and Modules
+- Reading Data
+- Biopython
+
+## III. Algorithms for DNA Sequencing
+
+## IV. Command Line Tools for Genomic Data Science
+
+## V. Bioconductor for Genomic Data Science
+
+## VI. Statistics for Genomic Data Science
