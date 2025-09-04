@@ -2,7 +2,7 @@
 
 ---
 
-N°  | Status | Course |
+No. | Status | Course |
 --- | --- | --- |
 I   | Done | [Introduction to Genomic Technologies](https://www.coursera.org/learn/introduction-genomics?specialization=genomic-data-science)
 II  | Done | [Python for Genomic Data Science](https://www.coursera.org/learn/python-genomics?specialization=genomic-data-science)
