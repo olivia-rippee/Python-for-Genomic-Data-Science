@@ -1,14 +1,9 @@
 import os
 os.chdir("C:/Users/olivi/OneDrive/Python/Genomic Data Science/3 Algorithms for DNA Sequencing/Data")
 
-import wget
-url = ""
-wget.download(url, "")
-
 # ----------------------------------------------
 # Shortest Common Superstring
 # ----------------------------------------------
-
 def overlap(a, b, min_length=3):
     '''Return length of longest suffix of 'a' matching a prefix of 'b' that is 
     at least 'min_length' characters long. If no such overlap exists, return 0.'''

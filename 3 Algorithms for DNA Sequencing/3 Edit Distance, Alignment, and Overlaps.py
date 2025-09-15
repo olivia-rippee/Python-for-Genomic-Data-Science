@@ -217,3 +217,190 @@ def naive_overlap_map(reads, k):
 reads = ['ACGGATC', 'GATCAAGT', 'TTCACGGA']
 print(naive_overlap_map(reads, 3))
 # Output: {('TTCACGGA', 'ACGGATC'): 5, ('ACGGATC', 'GATCAAGT'): 4}
+
+
+
+# ----------------------------------------------
+# Shortest Edit Distance
+# ----------------------------------------------
+def editDistance(x, y):
+    # Create distance matrix
+    D = []
+    for i in range(len(x)+1):
+        D.append([0] * (len(y)+1))
+    # Initialize first row and column of matrix
+    for i in range(len(x)+1):
+        D[i][0] = i
+    for j in range(len(y)+1):
+        D[0][j] = j
+    # Fill in the rest of the matrix
+    for i in range(1, len(x)+1):
+        for j in range(1, len(y)+1):
+            distHor = D[i][j-1] + 1         # insertion in x / deletion in y
+            distVer = D[i-1][j] + 1         # deletion in x / insertion in y
+            if x[i-1] == y[j-1]:
+                distDiag = D[i-1][j-1]      # match
+            else:
+                distDiag = D[i-1][j-1] + 1  # substitution
+            D[i][j] = min(distHor, distVer, distDiag)
+    # Bottom-right is exact edit distance (if aligned start to start)
+    return D[-1][-1]
+
+
+def bestMatchEditDistance(p, t):
+    """
+    Returns the minimal edit distance between pattern p and any substring of t,
+    allowing p to slide anywhere in t (fixed-length sliding window).
+    """
+    m = len(p)
+    n = len(t)
+    best = None
+    for i in range(0, n - m + 1):
+        window = t[i : i + m]
+        d = editDistance(p, window)
+        if (best is None) or (d < best):
+            best = d
+    return best
+
+
+# If you want to allow p to match with insertions/deletions in t as well (so that t-substring can be longer/shorter),
+# you could do a more general dynamic programming approach similar to approximate matching:
+def approxMatchEditDistance(p, t):
+    """
+    Returns the minimal edit distance allowing insertion/deletion in both p and t,
+    so pattern may align partially at any place in t.
+    This is analogous to the method shown in “approximate matching” (dynamic programming where we allow
+    start anywhere in t).
+    """
+    m = len(p)
+    n = len(t)
+    # D[i][j] = edit distance between p[:i] and t[:j]
+    D = [[0] * (n + 1) for _ in range(m + 1)]
+    # initialize first column: cost of deleting all of p up to i
+    for i in range(1, m + 1):
+        D[i][0] = i
+    # initialize first row: aligning empty p to prefixes of t has 0 cost (so match can start anywhere)
+    for j in range(0, n + 1):
+        D[0][j] = 0
+
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            cost = 0 if p[i-1] == t[j-1] else 1
+            D[i][j] = min(
+                D[i-1][j] + 1,        # delete from p
+                D[i][j-1] + 1,        # insert into p (or delete from t)
+                D[i-1][j-1] + cost    # substitution / match
+            )
+    # best match is minimum in the last row (i = m), among all j
+    best = min( D[m][j] for j in range(0, n + 1) )
+    return best
+
+def ReadGenome(filename):
+    genome = ''
+    with open(filename, 'r') as f:
+        for line in f:
+            if not line[0] == '>':
+                genome += line.rstrip()
+    return genome
+
+
+# Examples
+# ---------
+p = "GCGTATGC"
+t = "TATTGGCTATACGGTT"
+print(approxMatchEditDistance(p, t))  # Output: 2
+
+
+genome = ReadGenome('chr1.GRCh38.excerpt.fasta')
+
+p = 'GCTGATCGATCGTACG'
+print(approxMatchEditDistance(p, genome))  # Output: 3
+
+p = 'GATTTACCAGATTGAG'
+print(approxMatchEditDistance(p, genome))  # Output: 2
+
+
+# ----------------------------------------------
+# Optimized Overlaps
+# ----------------------------------------------
+def overlap(a, b, min_length=3):
+    start = 0
+    while True:
+        start = a.find(b[:min_length], start)
+        if start == -1:
+            return 0
+        if b.startswith(a[start:]):
+            return len(a) - start
+        start += 1
+
+def build_kmer_index(reads, k):
+    """Build a k-mer to reads index."""
+    kmer_dict = {}
+    for read in reads:
+        for i in range(len(read) - k + 1):
+            kmer = read[i:i+k]
+            if kmer not in kmer_dict:
+                kmer_dict[kmer] = set()
+            kmer_dict[kmer].add(read)
+    return kmer_dict
+
+def overlap_all_pairs(reads, k):
+    """Find all (a, b) read pairs with suffix(a) overlapping prefix(b) by ≥ k."""
+    kmer_dict = build_kmer_index(reads, k)
+    overlaps = set()
+    outgoing_reads = set()
+
+    for read in reads:
+        suffix = read[-k:]
+        candidates = kmer_dict.get(suffix, set())
+        for other in candidates:
+            if read != other:
+                olen = overlap(read, other, min_length=k)
+                if olen > 0:
+                    overlaps.add((read, other))
+                    outgoing_reads.add(read)  # Read has an outgoing edge
+
+    return overlaps, outgoing_reads
+
+def read_fastq(filename):
+    sequences = []
+    with open(filename) as f:
+        while True:
+            f.readline()  # Skip name line
+            seq = f.readline().strip()  # Sequence line
+            f.readline()  # Skip + line
+            f.readline()  # Skip quality line
+            if not seq:
+                break
+            sequences.append(seq)
+    return sequences
+
+
+# Examples
+# -----------
+reads = ['ABCDEFG', 'EFGHIJ', 'HIJABC']
+overlap_all_pairs(reads, 3)
+# Output: [('ABCDEFG', 'EFGHIJ'), ('EFGHIJ', 'HIJABC'), ('HIJABC', 'ABCDEFG')]
+overlap_all_pairs(reads, 4) #Output:  []
+
+
+reads = ['CGTACG', 'TACGTA', 'GTACGT', 'ACGTAC', 'GTACGA', 'TACGAT']
+overlap_all_pairs(reads, 4)
+# Output: 
+    # [('CGTACG', 'TACGTA'), ('CGTACG', 'GTACGT'), ('CGTACG', 'GTACGA'),
+    #  ('CGTACG', 'TACGAT'), ('TACGTA', 'ACGTAC'), ('TACGTA', 'CGTACG'),
+    #  ('GTACGT', 'TACGTA'), ('GTACGT', 'ACGTAC'), ('ACGTAC', 'GTACGA'),
+    #  ('ACGTAC', 'GTACGT'), ('ACGTAC', 'CGTACG'), ('GTACGA', 'TACGAT')]
+    #  {'ACGTAC', 'CGTACG', 'GTACGA', 'GTACGT', 'TACGTA'})
+
+overlap_all_pairs(reads, 5)
+# Output: 
+    # [('CGTACG', 'GTACGT'), ('CGTACG', 'GTACGA'), ('TACGTA', 'ACGTAC'),
+    #  ('GTACGT', 'TACGTA'), ('ACGTAC', 'CGTACG'), ('GTACGA', 'TACGAT')]
+    #  {'ACGTAC', 'CGTACG', 'GTACGA', 'GTACGT', 'TACGTA'})
+
+
+reads = read_fastq("ERR266411_1.for_asm.fastq")
+overlaps, outgoing_reads = overlap_all_pairs(reads, k=30)
+print("Overlapping read pairs (edges):", len(overlaps))           # Output: 904746
+print("Reads with outgoing edges (nodes):", len(outgoing_reads))  # Output: 7161
