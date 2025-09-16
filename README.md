@@ -20,7 +20,6 @@ VI  | Queued | [Statistics for Genomic Data Science](https://www.coursera.org/le
  - Computing Technology
  - Data Science Technology
 
- 
 ## II. Python for Genomic Data Science
 
 - Strings and Numbers
@@ -30,6 +29,10 @@ VI  | Queued | [Statistics for Genomic Data Science](https://www.coursera.org/le
 - Biopython
 
 ## III. Algorithms for DNA Sequencing
+- DNA Sequencing
+- Exact and Approximate Matching
+- Edit Distance and Alignment
+- Read Assembly
 
 ## IV. Command Line Tools for Genomic Data Science
 
