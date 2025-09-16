@@ -1,0 +1,262 @@
+import os
+os.chdir("C:/Users/olivi/OneDrive/Python/Genomic Data Science/3 Algorithms for DNA Sequencing/Data")
+
+# ----------------------------------------------
+# Shortest Common Superstring
+# ----------------------------------------------
+# NP-complete: no efficient algorithm for large inputs
+
+def overlap(a, b, min_length=3):
+    '''Return length of longest suffix of 'a' matching a prefix of 'b' that is 
+    at least 'min_length' characters long. If no such overlap exists, return 0.'''
+    
+    start = 0  # start all the way at the left
+    while True:
+        start = a.find(b[:min_length], start)  # look for b's prefix in a
+        if start == -1:  # no more occurrences to right
+            return 0
+        # found occurrence; check for full suffix/prefix match
+        if b.startswith(a[start:]):
+            return len(a)-start
+        start += 1  # move just past previous match
+
+import itertools
+
+def scs(ss):
+    '''Returns shortest common superstring of given strings,
+       assuming no string is a strict substring of another.'''
+        
+    shortest_sup = None
+    for ssperm in itertools.permutations(ss):
+        sup = ssperm[0]
+        for i in range(len(ss)-1):
+            olen = overlap(ssperm[i], ssperm[i+1], min_length=1)
+            sup += ssperm[i+1][olen:]
+        if shortest_sup is None or len(sup) < len(shortest_sup):
+            shortest_sup = sup
+    return shortest_sup
+
+def scs_all(ss):
+    """ Return a set of all shortest common superstrings for given strings. """
+    shortest_sup = None
+    shortest_sups = set()
+    for ssperm in itertools.permutations(ss):
+        sup = ssperm[0]
+        for i in range(len(ssperm) - 1):
+            olen = overlap(ssperm[i], ssperm[i+1], min_length=1)
+            sup += ssperm[i+1][olen:]
+        if shortest_sup is None or len(sup) < len(shortest_sup):
+            shortest_sup = sup
+            shortest_sups = {sup}
+        elif len(sup) == len(shortest_sup):
+            shortest_sups.add(sup)
+    return shortest_sups
+
+
+# Examples
+# -----------
+scs(['ACGGATGAGC', 'GAGCGGA', 'GAGCGAG'])
+# Output: 'ACGGATGAGCGAGCGGA'
+
+
+strings = ["CCT", "CTT", "TGC", "TGG", "GAT", "ATT"]
+print(len(scs(strings))) # Output: 11
+results = scs_all(strings)
+print(len(results)) # Output: 4
+
+
+# ----------------------------------------------
+# Greedy Shortest Common Superstring
+# ----------------------------------------------
+import itertools
+
+def overlap(a, b, min_length=3):
+    start = 0  # start all the way at the left
+    while True:
+        start = a.find(b[:min_length], start)  # look for b's prefix in a
+        if start == -1:  # no more occurrences to right
+            return 0
+        # found occurrence; check for full suffix/prefix match
+        if b.startswith(a[start:]):
+            return len(a)-start
+        start += 1  # move just past previous match
+
+def scs(ss):
+    shortest_sup = None
+    for ssperm in itertools.permutations(ss):
+        sup = ssperm[0]  # superstring starts as first string
+        for i in range(len(ss)-1):
+            # overlap adjacent strings A and B in the permutation
+            olen = overlap(ssperm[i], ssperm[i+1], min_length=1)
+            # add non-overlapping portion of B to superstring
+            #sup += ssperm[i+1][-(len(ssperm[i+1])-olen):]
+            sup += ssperm[i+1][olen:]
+        if shortest_sup is None or len(sup) < len(shortest_sup):
+            shortest_sup = sup  # found shorter superstring
+    return shortest_sup  # return shortest
+
+def pick_maximal_overlap(reads, k):
+    '''Return a pair of reads from the list with a
+       maximal suffix/prefix overlap >= k.  Returns
+       overlap length 0 if there are no such overlaps.'''
+        
+    reada, readb = None, None
+    best_olen = 0
+    for a, b in itertools.permutations(reads, 2):
+        olen = overlap(a, b, min_length=k)
+        if olen > best_olen:
+            reada, readb = a, b
+            best_olen = olen
+    return reada, readb, best_olen
+
+def greedy_scs(reads, k):
+    '''Greedy shortest-common-superstring merge. Repeat until no edges 
+    (overlaps of length >= k) remain.'''
+    
+    read_a, read_b, olen = pick_maximal_overlap(reads, k)
+    while olen > 0:
+        reads.remove(read_a)
+        reads.remove(read_b)
+        reads.append(read_a + read_b[olen:])
+        read_a, read_b, olen = pick_maximal_overlap(reads, k)
+    return ''.join(reads)
+
+
+# Examples
+# ----------
+greedy_scs(['ABC', 'BCA', 'CAB'], 2) # Output: 'CABCA'
+
+
+greedy_scs(['ABCD', 'CDBC', 'BCDA'], 1) # Output: 'CDBCABCDA' 
+scs(['ABCD', 'CDBC', 'BCDA']) # Output: 'ABCDBCDA' # shorter
+
+
+# Third law of assembly: repeats make assembly difficult
+
+
+# ----------------------------------------------
+# De Bruijn / Eulerian Walk
+# ----------------------------------------------
+def de_bruijn_ize(st, k):
+    '''Return a list holding, for each k-mer, its left k-1-mer and its right k-1-mer in a pair.'''
+    edges = []
+    nodes = set()
+    for i in range(len(st) - k + 1):
+        edges.append((st[i:i+k-1], st[i+1:i+k]))
+        nodes.add(st[i:i+k-1])
+        nodes.add(st[i+1:i+k])
+    return nodes, edges
+
+nodes, edges = de_bruijn_ize("ACGCGTCG", 3)
+print(*nodes)
+# Distinct k-1 mers: TC AC CG GT GC
+
+print(*edges)
+# Eulerian walk for this De Bruijn graph: 
+# ('AC', 'CG') ('CG', 'GC') ('GC', 'CG') ('CG', 'GT') ('GT', 'TC') ('TC', 'CG')
+
+from graphviz import Digraph
+
+def visualize_de_bruijn(st, k, output_file="de_bruijn_graph"):
+    '''Visualize a directed multigraph using graphviz and render it to a file.'''
+    nodes, edges = de_bruijn_ize(st, k)
+
+    dot = Digraph(name="DeBruijn_graph", format='png')
+
+    for node in nodes:
+        dot.node(node, label=node)
+    for src, dst in edges:
+        dot.edge(src, dst)
+
+    # Render the graph to a file (output_file.png) and open it
+    dot.render(output_file, view=True)
+
+
+# Example
+# ----------
+visualize_de_bruijn("ACGCGTCG", 3)
+
+
+# ----------------------------------------------
+# Read Assembly Long Sequences
+# ----------------------------------------------
+def overlap(a, b, min_length=3):
+    start = 0  # start all the way at the left
+    while True:
+        start = a.find(b[:min_length], start)  # look for b's suffx in a
+        if start == -1:  # no more occurrences to right
+            return 0
+        # found occurrence; check for full suffix/prefix match
+        if b.startswith(a[start:]):
+            return len(a)-start
+        start += 1  # move just past previous match
+
+import itertools
+
+def scss(ss):
+    """ Returns shortest common superstring of given strings, which must be the same length """
+    shortest_sup = None
+    shortest_cnt = 1
+    for ssperm in itertools.permutations(ss):
+        sup = ssperm[0]  # superstring starts as first string
+        for i in range(len(ss)-1):
+            # overlap adjacent strings A and B in the permutation
+            olen = overlap(ssperm[i], ssperm[i+1], min_length=1)
+            
+            # add non-overlapping portion of B to superstring
+            sup += ssperm[i+1][olen:]
+        if shortest_sup is None or len(sup) < len(shortest_sup):
+            shortest_sup = sup  # found shorter superstring
+            shortest_cnt = 1
+        elif len(sup) == len(shortest_sup):
+            shortest_cnt += 1
+    return shortest_sup, shortest_cnt  # return shortest    
+
+def pick_max_overlap(reads, k):
+    best_a, best_b, best_len = None, None, 0
+    for a, b in itertools.permutations(reads, 2):
+        length = overlap(a, b, min_length=k)
+        if length > best_len:
+            best_a, best_b, best_len = a, b, length
+    return best_a, best_b, best_len
+
+def greedy_scss(reads, k):
+    while True:
+        a, b, olen = pick_max_overlap(reads, k)
+        if olen == 0:
+            break
+        reads.remove(a)
+        reads.remove(b)
+        reads.append(a + b[olen:])
+    return ''.join(reads) # append all non-overlaps onto eachother and return the concatenated string
+
+def count_bases(genome):
+    counts = {'A': 0, 'C': 0, 'G': 0, 'T': 0}
+    for base in genome:
+        if base in counts:
+            counts[base] += 1
+    return counts
+
+def read_fastq(filename):
+    sequences = []
+    with open(filename) as f:
+        while True:
+            f.readline()  # skip header
+            seq = f.readline().strip()
+            f.readline()  # skip +
+            f.readline()  # skip quality
+            if not seq:
+                break
+            sequences.append(seq)
+    return sequences
+
+# import wget
+# url = 'https://d28rh4a8wq0iu5.cloudfront.net/ads1/data/ads1_week4_reads.fq'
+# wget.download(url, "ads1_week4_reads.fq")
+
+reads = read_fastq("ads1_week4_reads.fq")
+assembled_genome = greedy_scss(reads, 30) # LONGGGG run
+assembled_counts = count_bases(assembled_genome)
+print(f"Assembled genome length: {len(assembled_genome)}")   # Output: 15894
+print(f"Number of 'A's in genome: {assembled_counts['A']}")  # Output: 4633
+print(f"Number of 'T's in genome: {assembled_counts['T']}")  # Output: 3723

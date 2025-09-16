@@ -1,0 +1,13 @@
+digraph DeBruijn_graph {
+	TC [label=TC]
+	AC [label=AC]
+	CG [label=CG]
+	GT [label=GT]
+	GC [label=GC]
+	AC -> CG
+	CG -> GC
+	GC -> CG
+	CG -> GT
+	GT -> TC
+	TC -> CG
+}
