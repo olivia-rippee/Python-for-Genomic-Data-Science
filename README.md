@@ -48,5 +48,67 @@ VI  | Queued | [Statistics for Genomic Data Science](https://www.coursera.org/le
   - Application: RNA-seq analysis
  
 ## V. Bioconductor for Genomic Data Science
+- Week 1
+   - Introduction to Bioconductor
+   - GRanges and AnnotationHub
+   - IRanges
+- Week 2
+   - Biological strings in Bioconductor
+   - Biostrings
+   - BSgenome
+   - Intermediate usage of GenomicRanges
+   - Rle
+   - Transcription annotation in Bioconductor
+   - GenomicFeatures
+   - Importing data using rtracklayer
+- Week 3
+   - Data containers and annotations
+   - ExpressionSet
+   - SummarizedExperiment
+    - GEOquery
+    - biomaRt
+- Week 4
+   - Handling raw and aligned short reads
+   - Basic usage of statistical models for differential expression
+   - Preprocessing microarrays
 
 ## VI. Statistics for Genomic Data Science
+- Week 1
+   - Reproducible Research
+   - The three tables in genomics
+   - Experimental Design: Variability, replication, power
+   - Experimental Design: Confounding and randomization
+   - Exploratory Analysis
+   - Data transforms
+   - Clustering
+- Week 2
+   - Dimension reduction
+   - Pre-processing and normalization
+   - Quantile normalization (in R)
+   - Linear models
+   - Linear models with categorical covariates
+   - Adjusting for covariates
+   - Linear regression (in R)
+   - Many regressions at once
+   - Batch effects and confounders (in R)
+- Week 3
+   - Logistic regression
+   - Regression for counts
+   - GLMs (in R)
+   - Inference
+   - Null and alternative hypotheses
+   - Calculating statistics
+   - Comparing models
+   - Permutation
+   - P-values
+   - Multiple testing
+- Week 4
+   - Gene set analysis
+   - More enrichment
+   - The process for RNA-seq
+   - The process for Chip-Seq
+   - The process for DNA methylation
+   - The process for GWAS/WGS
+   - Combining data types (eQTL)
+   - Researcher degrees of freedom
+   - Inference vs. prediction
