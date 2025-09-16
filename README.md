@@ -41,7 +41,7 @@ VI  | Queued | [Statistics for Genomic Data Science](https://www.coursera.org/le
   - Bowtie, BWA
   - Samtools, Bcftools
   - Application: variant calling
--Transcriptomics
+- Transcriptomics
   - Tophat
   - Cufflinks
   - IGV
