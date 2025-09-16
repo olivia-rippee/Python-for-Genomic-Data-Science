@@ -14,14 +14,12 @@ VI  | Queued | [Statistics for Genomic Data Science](https://www.coursera.org/le
 ---
 
 ## I. Introduction to Genomic Technologies
-
  - Biology Overview
  - Measurement Technology
  - Computing Technology
  - Data Science Technology
 
 ## II. Python for Genomic Data Science
-
 - Strings and Numbers
 - Data Structures, Ifs, and Loops
 - Functions and Modules
@@ -35,7 +33,20 @@ VI  | Queued | [Statistics for Genomic Data Science](https://www.coursera.org/le
 - Read Assembly
 
 ## IV. Command Line Tools for Genomic Data Science
-
+- Unix Commands and Pipes
+- Sequences and genomic features
+  - Formats: Fastq, BED, GTF, SAM
+  - Tools: Samtools, Bedtools
+- Alignment and sequence variation
+  - Bowtie, BWA
+  - Samtools, Bcftools
+  - Application: variant calling
+-Transcriptomics
+  - Tophat
+  - Cufflinks
+  - IGV
+  - Application: RNA-seq analysis
+ 
 ## V. Bioconductor for Genomic Data Science
 
 ## VI. Statistics for Genomic Data Science
