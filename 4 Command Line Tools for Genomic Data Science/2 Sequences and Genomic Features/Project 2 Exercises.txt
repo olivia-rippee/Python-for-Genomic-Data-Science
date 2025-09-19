@@ -1,0 +1,144 @@
+cd /mnt/c/Users/olivi/OneDrive/Python/Genomic\ Data\ Science/4\ Command\ Line\ Tools\ for\ Genomic\ Data\ Science/Data/gencommand_proj2_data
+
+# ------------------------------------------
+# For  ‘athal_wu_0_A.bam’:
+# ------------------------------------------
+
+sudo apt install samtools
+
+# How many alignments does the set contain? 
+# ------------------------------------------
+samtools view athal_wu_0_A.bam | wc -l
+	221372
+
+# How many alignments show the read’s mate unmapped?
+# ---------------------------------------------------
+samtools view athal_wu_0_A.bam | cut -f7 | grep -c '^\*$'
+	65521
+
+# How many alignments contain a deletion (D)? 
+# --------------------------------------------
+samtools view athal_wu_0_A.bam | cut -f6 | grep -c 'D'
+	2451
+
+# How many alignments show the read’s mate mapped to the same chromosome?
+# ------------------------------------------------------------------------
+samtools view athal_wu_0_A.bam | cut -f7 | grep -c '^=$'
+	150913
+
+# How many alignments are spliced?
+# ---------------------------------
+samtools view athal_wu_0_A.bam | cut -f6 | grep -c 'N'
+	0
+
+# ------------------------------------------
+# For range “Chr3:11,777,000-11,794,000”:
+# ------------------------------------------
+
+# How many alignments does the set contain?
+# -----------------------------------------
+samtools sort athal_wu_0_A.bam -o athal_wu_0_A.sorted.bam
+samtools index athal_wu_0_A.sorted.bam
+samtools view -b athal_wu_0_A.sorted.bam Chr3:11777000-11794000 > athal_wu_0_A.region.bam
+samtools flagstat athal_wu_0_A.region.bam
+or 
+samtools view -b athal_wu_0_A.bam Chr3:11777000-11794000 | samtools view - | wc -l
+	7081
+
+# How many alignments show the read’s mate unmapped?
+# ---------------------------------------------------
+samtools view athal_wu_0_A.region.bam | cut -f7 | grep -c '^\*$'
+	1983
+
+# How many alignments contain a deletion (D)?
+# ---------------------------------------------------
+samtools view athal_wu_0_A.region.bam | cut -f6 | grep -c 'D'
+	31
+
+# How many alignments show the read’s mate mapped to the same chromosome?
+# ------------------------------------------------------------------------
+samtools view athal_wu_0_A.region.bam | cut -f7 | grep -c '^=$'
+	4670
+
+# How many alignments are spliced?
+# ---------------------------------
+samtools view athal_wu_0_A.bam | cut -f6 | grep -c 'N'
+	0
+
+# -----------------------------------------------
+# General information from the original BAM file
+# -----------------------------------------------
+
+# How many sequences are in the genome file? 
+# -------------------------------------------
+samtools view -H athal_wu_0_A.bam | grep '^@SQ' | wc -l
+	7
+
+# What is the length of the first sequence in the genome file?
+# --------------------------------------------------------------
+samtools view -H athal_wu_0_A.bam | grep '^@SQ' | head -1 | sed 's/.*LN:\([0-9]*\).*/\1/'
+	29923332
+
+# What alignment tool was used?
+# ------------------------------
+samtools view -H athal_wu_0_A.bam | grep '^@PG'
+	@PG     ID:stampy       VN:1.0.3_(r627) CL:-g /lustre/scratch103/sanger/xcg/tmp/tmp.zYfXz26246 -h /lustre/scratch103/sanger/xcg/tmp/tmp.zYfXz26246 --readgroup=ID:Wii_PER01,LB:wu_phaseI,SM:wu_0,PI:400,PL:SLX,DS:wu_0_Genome --bwaoptions=-q10 /lustre/scratch103/sanger/xcg/wu_0.v7.fas -o /lustre/scratch103/sanger/xcg/wu_0/A/aln_A1.sp0.sam -M /lustre/scratch103/sanger/xcg/wu_0/read_1_1.sp0.fq.gz /lustre/scratch103/sanger/xcg/wu_0/read_1_2.sp0.fq.gz
+	@PG     ID:samtools     PN:samtools     PP:stampy       VN:1.19.2       CL:samtools view -H athal_wu_0_A.bam
+
+# What is the read identifier (name) for the first alignment?
+# ------------------------------------------------------------
+samtools view athal_wu_0_A.bam | head -1 | cut -f1
+	GAII05_0002:1:113:7822:3886#0
+
+# What is the start position of this read’s mate on the genome? Give 
+# this as ‘chrom:pos’ if the read was mapped, or ‘*” if unmapped.
+# -------------------------------------------------------------------
+samtools view athal_wu_0_A.bam | head -1 | awk '{
+  chrom = $3;
+  if ($7 == "*" || $8 == 0)
+    print "*";
+  else if ($7 == "=")
+    print chrom ":" $8;
+  else
+    print $7 ":" $8
+}'
+	Chr3:11700332
+
+# -----------------------------------------------
+# BEDtools Exon Overlap
+# -----------------------------------------------
+
+sudo apt install bedtools
+
+# How many overlaps (each overlap is reported on one line) are reported?
+# -----------------------------------------------------------------------
+samtools view -b athal_wu_0_A.bam Chr3:11777000-11794000 > region.bam
+bedtools bamtobed -i region.bam > region.bed
+grep -P "\texon\t" athal_wu_0_A_annot.gtf > exons.gtf
+bedtools intersect -a region.bed -b exons.gtf -wo | wc -l
+or
+bedtools intersect -abam athal_wu_0_A.region.bam -b athal_wu_0_A_annot.gtf -bed -wo > overlaps.bed
+wc -l overlaps.bed
+	3101
+
+
+# How many of these are 10 bases or longer?
+# ------------------------------------------
+bedtools intersect -a region.bed -b exons.gtf -wo | awk '$NF >= 10' | wc -l
+	2899
+	
+# How many alignments overlap the annotations?
+# ---------------------------------------------
+bedtools intersect -a region.bed -b exons.gtf -wo | cut -f4 | sort -u | wc -l
+	3101
+
+# Conversely, how many exons have reads mapped to them?
+# ------------------------------------------------------
+cut -f13-21 overlaps.bed | sort -u | wc -l
+	21
+
+# If you were to convert the transcript annotations in the file “athal_wu_0_A_annot.gtf” 
+into BED format, how many BED records would be generated?
+# ------------------------------------------------------------------------
+cut -f9 athal_wu_0_A_annot.gtf | grep -o 'transcript_id "[^"]*"' | sort -u | wc -l
+	4
